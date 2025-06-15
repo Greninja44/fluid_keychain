@@ -21,3 +21,8 @@ so lets research about that....... omg so i have to design a pcb for it ( bruhhh
 its even compact perfect for my project
 ![image](https://github.com/user-attachments/assets/8ef8b9e0-9919-4b3f-b8b1-fe29b2a956ce)
 
+
+DONE with my circuit design:( i mean schemtics lol)
+![image](https://github.com/user-attachments/assets/d9ee0184-4f78-43a6-b977-155074360a0b)
+
+
