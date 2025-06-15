@@ -42,7 +42,7 @@ Then, I jumped into designing the 3D case. Had to keep it tight ‘cause it’s 
 
 I will upload the firmware and UI code after testing on the final hardware version.
 
-## Coding Start (Just Started 😅) - 9:30 AM
+## Coding Start (Just Started 😅) - 9:30 PM
 Once I wrapped up the schematic and sorted out all the parts, I started looking into how to actually control the RGB matrix. I found this FastLED library — and bro, it’s so cooooool. Everyone’s( most people on reddit) using it for WS2812 LEDs, and the code looks pretty simple. I haven’t uploaded or tested anything yet, but from the examples I checked out, it seems super easy to get stuff running like gradients and rainbow animations.Then I also found Wowki Animator — it's this online tool where you can make LED animations by just drawing frames, and it literally gives you Arduino code for it. Looked mad cool, so I bookmarked it for later. Plan is to make some fluid-style animations with it once the hardware’s ready.   update people: so i was working on wowki animater i tried making animation on my oled screen paired up with esp32
 ![image](https://github.com/user-attachments/assets/ee8f3593-0c62-4131-8ee9-e426bdcc03b9)
 
