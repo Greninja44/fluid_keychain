@@ -17,5 +17,7 @@ so we are making something like this today
 Found out about esp32-s3 rgb matrix board  so using this im gonna make keychain
 lol we have a problem i wanna make it handy so i need a lipo battery but the esp32 -s3 doesnt have an inbuilt charger
 so lets research about that....... omg so i have to design a pcb for it ( bruhhh esp32 needs 5v and battery is 3.7  v , so gonna design a booster too)
-lets start building pcb
+------------------------------------------------------------------------------------------------------
+its even compact perfect for my project
+![image](https://github.com/user-attachments/assets/8ef8b9e0-9919-4b3f-b8b1-fe29b2a956ce)
 
