@@ -1,7 +1,7 @@
 ---
-title: "Fluid_pendant"
+title: "Fluid_keychain"
 author: "greninja44"
-description: "A fluid simulation pendant inspired from https://youtu.be/jis1MC5Tm8k?si=dFwDLe44DeG1LyNZ"
+description: "A fluid simulation keychain inspired  from https://youtu.be/jis1MC5Tm8k?si=dFwDLe44DeG1LyNZ"
 created_at: "2025-06-15"
 Total time spent: 6h
 ---
