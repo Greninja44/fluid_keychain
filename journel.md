@@ -28,7 +28,16 @@ DONE with my circuit design:( i mean schemtics lol)
 ---
 ![image](https://github.com/user-attachments/assets/e854b06e-9236-496c-a101-d4fbaec9ba64)
 ---
-lets work on the case
+
+![image](https://github.com/user-attachments/assets/ea003b84-510f-48fa-8e18-667c9b739c6c)
+
+![Screenshot 2025-06-15 111432](https://github.com/user-attachments/assets/7d132b98-a2c0-4591-8653-95d10a4c9954)
+
+i will be 3d printing the case and would cut acrylic sheet and drill it in the back
+
+
+
+
 
 
 
