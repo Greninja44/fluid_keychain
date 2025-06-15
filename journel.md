@@ -35,6 +35,8 @@ DONE with my circuit design:( i mean schemtics lol)
 
 i will be 3d printing the case and would cut acrylic sheet and drill it in the back
 
+Code journel coming sooon after its get approved
+
 
 
 
