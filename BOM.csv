@@ -8,7 +8,6 @@
 7,1uF Ceramic Capacitor (0603),Decoupling capacitor,2,0.06
 8,10uF Electrolytic Capacitor,Output smoothing cap,1,0.06
 9,SS14 Schottky Diode,Reverse current protection,1,0.07
-10,3D Printed Case + acrylic sheets,,1,15.0
 11,M2 Screws + Nuts,Fasten case (x4),1 set,0.12
 12,Soldering Accessories,"Wire, flux, solder, header pins",—,10.0
 13,Custom PCB,"In case I don’t get offline parts, will order PCBA",1,42.41
