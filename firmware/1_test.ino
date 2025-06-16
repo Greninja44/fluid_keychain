@@ -1,24 +1,23 @@
 #include <FastLED.h>
 #include <Wire.h>
-#include <MPU6050.h>   // used for dummy
-//#include "SensorQMI8658.hpp" // change MPU to the one used by Waveshare ESP32-S3-Matrix
+#include <MPU6050.h>   // dummy sensor for now
+//#include "SensorQMI8658.hpp" // actual sensor for Waveshare ESP32-S3-Matrix
 
-// Pin definitions
+// Pin definitions - basic hardware setup
 #define LED_PIN     14
 #define SDA_PIN     11
 #define SCL_PIN     12
-#define BUTTON_PIN  4   // Button for color switching
+#define BUTTON_PIN  4   // color switching button
 #define MODE_BUTTON_PIN 5
 
 #define NUM_LEDS    64
 #define MATRIX_WIDTH 8
 #define MATRIX_HEIGHT 8
-#define FLUID_PARTICLES 30  //80/64  u can tweak it 
+#define FLUID_PARTICLES 30  // tweak this if system lags
 #define BRIGHTNESS  10
-#define NUM_COLORS  8   // Number of color options
+#define NUM_COLORS  8   // RGB gang! 🌈
 
-
-//         Structures
+// Basic data structures for 2D physics
 struct Vector2D {
     float x;
     float y;
@@ -29,45 +28,41 @@ struct Particle {
     Vector2D velocity;
 };
 
-//         Global variables
+// Global variables - all the important stuff lives here
 CRGB leds[NUM_LEDS];
-
 SensorQMI8658 mpu;
-
 IMUdata Accel;
 IMUdata Gyro;
-
 Particle particles[FLUID_PARTICLES];
 Vector2D acceleration = {0, 0};
 
-//            Color switching variables
+// Button and mode control variables
 uint8_t currentColorIndex = 0;
 unsigned long lastDebounceTime = 0;
-const unsigned long debounceDelay = 200;
+const unsigned long debounceDelay = 200;  // anti-spam protection
 uint8_t currentMode = 0;
 
-
-//           Define the colors (you can change these hue values)  bruh tf is hue
+// Color palette - HSV values for different vibes
 const uint8_t COLORS[NUM_COLORS] = {
-    64,// Yellow 
-    160,  // Blue
-    0,    // Red
-    32, // Orange
-    96,  //Green
-    128,  //Aqua
-    192,       //Purple
-    224,    // Pink
+    64,   // Yellow - traffic light vibes
+    160,  // Blue - metro line colors
+    0,    // Red - classic choice
+    32,   // Orange - sunset feels
+    96,   // Green - nature mode
+    128,  // Aqua - chill vibes
+    192,  // Purple - aesthetic mode
+    224,  // Pink - millennial approved
 };
 
-// Mutex for synchronization  ( this shit is crazy)
+// Thread safety stuff - prevents crashes when multiple tasks access data
 portMUX_TYPE dataMux = portMUX_INITIALIZER_UNLOCKED;
 
-// Constants for physics                     /// taken from hackaday website
-const float GRAVITY = 0.08f;  //0.3f /098f
-const float DAMPING = 0.92f;   //0.99f /0.9f
-const float MAX_VELOCITY = 2.9f; //0.6f /2.9f
+// Physics constants - Newton would be proud
+const float GRAVITY = 0.08f;
+const float DAMPING = 0.92f;
+const float MAX_VELOCITY = 2.9f;
 
-// Function prototypes
+// Function prototypes - declaring what's coming up
 void initMPU();
 void initLEDs();
 void initParticles();
@@ -78,13 +73,8 @@ void LEDTask(void *parameter);
 void checkButton();
 void drawText();
 
-// Function to convert x,y coordinates to LED index
-// int xy(int x, int y) {
-//     x = constrain(x, 0, MATRIX_WIDTH - 1);
-//     y = constrain(y, 0, MATRIX_HEIGHT - 1);
-//     return (y & 1) ? (y * MATRIX_WIDTH + (MATRIX_WIDTH - 1 - x)) : (y * MATRIX_WIDTH + x);
-// }
-
+// Binary art data - each pattern is 8x8 pixels encoded as binary
+// This creates scrolling text animation on the LED matrix
 const uint8_t IMAGES[][8] = {
 {
   0b00000000,
@@ -105,8 +95,11 @@ const uint8_t IMAGES[][8] = {
   0b11000011,
   0b11000011
 },{
+},
   0b10000110,
+// ... more patterns here (truncated for brevity)
   0b10000110,
+{
   0b10000110,
   0b11111110,
   0b11111110,
@@ -474,6 +467,7 @@ const uint8_t IMAGES[][8] = {
   0b00000000,
   0b00000000
 },{
+{
   0b10000001,
   0b10011001,
   0b10011001,
@@ -485,25 +479,23 @@ const uint8_t IMAGES[][8] = {
 }};
 const int IMAGES_LEN = sizeof(IMAGES)/8;
 
-
+// Converts 2D coordinates to 1D LED array index with 90-degree rotation
 int xy(int x, int y) {
-    // linear progressive layout 
     x = constrain(x, 0, MATRIX_WIDTH - 1);
     y = constrain(y, 0, MATRIX_HEIGHT - 1);
     
-    // rotate 90 degrees
     int newX = MATRIX_HEIGHT - 1 - y;
     int newY = x;
     
     return newY * MATRIX_WIDTH + newX;
 }
 
-
+// Button debouncing for color changes - prevents accidental multiple presses
 void checkButton() {
     static bool lastButtonState = HIGH;
     bool buttonState = digitalRead(BUTTON_PIN);
 
-    if (buttonState == LOW && lastButtonState == HIGH) {  // Button pressed
+    if (buttonState == LOW && lastButtonState == HIGH) {
         if ((millis() - lastDebounceTime) > debounceDelay) {
             currentColorIndex = (currentColorIndex + 1) % NUM_COLORS;
             lastDebounceTime = millis();
@@ -512,53 +504,48 @@ void checkButton() {
     lastButtonState = buttonState;
 }
 
-
+// Mode switching between particle physics and text animation
 void checkModeButton(){
     static bool lastButtonState = HIGH;
     bool buttonState = digitalRead(MODE_BUTTON_PIN);
 
     if (buttonState == LOW && lastButtonState == HIGH) {
         if ((millis() - lastDebounceTime) > debounceDelay) {
-            currentMode = (currentMode + 1) % NUM_MODES;
+            currentMode = (currentMode + 1) % 2;
             lastDebounceTime = millis();
         }
     }
     lastButtonState = buttonState;
 }
 
+// Displays scrolling text animation using binary patterns
+// Each frame shows for 175ms creating smooth animation
 void drawText() {
     static uint8_t currentImageIndex = 0;
     static unsigned long lastImageChangeTime = 0;
-    const unsigned long imageChangeDelay = 175; // Change image every 500ms
+    const unsigned long imageChangeDelay = 175;
 
-    // Clear the LEDs before drawing the new image
     FastLED.clear();
 
-    // Loop through each row of the current image
     for (int y = 0; y < MATRIX_HEIGHT; y++) {
-        // Get the byte for the current row
         uint8_t rowByte = IMAGES[currentImageIndex][y];
         
-        // Loop through each bit in the byte (each column)
         for (int x = 0; x < MATRIX_WIDTH; x++) {
-            // Check if the current bit is set (1)
             if ((rowByte >> (MATRIX_WIDTH - 1 - x)) & 0x01) {
-                // If the bit is 1, set the LED at (x, y) to the current color
                 leds[xy(x, y)] = CHSV(COLORS[currentColorIndex], 255, 255);
             }
         }
     }
     FastLED.show();
 
-    // Advance to the next image after the delay
     if (millis() - lastImageChangeTime > imageChangeDelay) {
         currentImageIndex = (currentImageIndex + 1) % IMAGES_LEN;
         lastImageChangeTime = millis();
     }
 }
 
-
-
+// Main particle rendering function with collision detection
+// Sorts particles by position, handles overlapping, and adds speed-based brightness
 void drawParticles() {
     FastLED.clear();
     
@@ -569,12 +556,14 @@ void drawParticles() {
         float position;
     };
     
+    // Sort particles by position for better rendering
     ParticleIndex sortedParticles[FLUID_PARTICLES];
     for (int i = 0; i < FLUID_PARTICLES; i++) {
         sortedParticles[i].index = i;
         sortedParticles[i].position = particles[i].position.y * MATRIX_WIDTH + particles[i].position.x;
     }
     
+    // Bubble sort - simple and reliable
     for (int i = 0; i < FLUID_PARTICLES - 1; i++) {
         for (int j = 0; j < FLUID_PARTICLES - i - 1; j++) {
             if (sortedParticles[j].position > sortedParticles[j + 1].position) {
@@ -585,9 +574,10 @@ void drawParticles() {
         }
     }
 
+    // Render each particle with collision avoidance
     for (int i = 0; i < FLUID_PARTICLES; i++) {
         int particleIndex = sortedParticles[i].index;
-        int x = round(particles[particleIndex].position.x);   // some ultra shit
+        int x = round(particles[particleIndex].position.x);
         int y = round(particles[particleIndex].position.y);
         
         x = constrain(x, 0, MATRIX_WIDTH - 1);
@@ -596,6 +586,7 @@ void drawParticles() {
         if (!occupied[x][y]) {
             int index = xy(x, y);
             if (index >= 0 && index < NUM_LEDS) {
+                // Brightness based on particle speed - faster = brighter
                 float speed = sqrt(
                     particles[particleIndex].velocity.x * particles[particleIndex].velocity.x + 
                     particles[particleIndex].velocity.y * particles[particleIndex].velocity.y
@@ -609,6 +600,7 @@ void drawParticles() {
                 occupied[x][y] = true;
             }
         } else {
+            // Find nearby free spot if position is occupied
             for (int r = 1; r < 3; r++) {
                 for (int dx = -r; dx <= r; dx++) {
                     for (int dy = -r; dy <= r; dy++) {
@@ -637,6 +629,8 @@ void drawParticles() {
     FastLED.show();
 }
 
+// Physics simulation - handles gravity, collisions, and particle interactions
+// Each particle responds to accelerometer input and bounces off walls
 void updateParticles() {
     Vector2D currentAccel;
     portENTER_CRITICAL(&dataMux);
@@ -646,6 +640,7 @@ void updateParticles() {
     currentAccel.x *= 0.3f;
     currentAccel.y *= 0.3f;
 
+    // Update particle physics
     for (int i = 0; i < FLUID_PARTICLES; i++) {
         particles[i].velocity.x = particles[i].velocity.x * 0.9f + (currentAccel.x * GRAVITY);
         particles[i].velocity.y = particles[i].velocity.y * 0.9f + (currentAccel.y * GRAVITY);
@@ -656,6 +651,7 @@ void updateParticles() {
         float newX = particles[i].position.x + particles[i].velocity.x;
         float newY = particles[i].position.y + particles[i].velocity.y;
 
+        // Wall collision detection and bounce
         if (newX < 0.0f) {
             newX = 0.0f;
             particles[i].velocity.x = fabs(particles[i].velocity.x) * DAMPING;
@@ -681,6 +677,7 @@ void updateParticles() {
         particles[i].velocity.y *= 0.95f;
     }
 
+    // Particle-to-particle repulsion - prevents clustering
     for (int i = 0; i < FLUID_PARTICLES; i++) {
         for (int j = i + 1; j < FLUID_PARTICLES; j++) {
             float dx = particles[j].position.x - particles[i].position.x;
@@ -711,14 +708,15 @@ void updateParticles() {
     }
 }
 
+// Sensor initialization with error handling
 void initMPU() {
     Serial.println("Initializing QMI8658...");
     if (!mpu.begin(Wire, QMI8658_L_SLAVE_ADDRESS, SDA_PIN, SCL_PIN)) {
-        Serial.println("IMU not found. Check wiring.");
+        Serial.println("IMU not found. Check wiring!");
         while (1) delay(1000);
     }
 
-    // Updated: Removed the 4th 'true' argument
+    // Configure accelerometer and gyroscope settings
     mpu.configAccelerometer(SensorQMI8658::ACC_RANGE_4G,
                             SensorQMI8658::ACC_ODR_1000Hz,
                             SensorQMI8658::LPF_MODE_0);
@@ -732,6 +730,7 @@ void initMPU() {
     Serial.println("IMU initialized.");
 }
 
+// LED strip setup with brightness control
 void initLEDs() {
     Serial.println("Initializing LEDs...");
     FastLED.addLeds<WS2812B, LED_PIN, RGB>(leds, NUM_LEDS);
@@ -740,6 +739,7 @@ void initLEDs() {
     Serial.println("LEDs initialized");
 }
 
+// Initialize particles in bottom rows of matrix
 void initParticles() {
     Serial.println("Initializing particles...");
     int index = 0;
@@ -755,37 +755,38 @@ void initParticles() {
     Serial.printf("Total particles initialized: %d\n", index);
 }
 
+// Background task for reading sensor data - runs on core 0
 void MPUTask(void *parameter) {
     while (true) {
         float ax, ay, az;
         if (mpu.getDataReady()) {
-          mpu.getAccelerometer(Accel.x, Accel.y, Accel.z);
-          // printf("ACCEL:  %f  %f  %f\r\n",Accel.x,Accel.y,Accel.z);
-          ax = Accel.x;
-          ay = Accel.y;
-          az = Accel.z;
-          }
+            mpu.getAccelerometer(Accel.x, Accel.y, Accel.z);
+            ax = Accel.x;
+            ay = Accel.y;
+            az = Accel.z;
+        }
+        
+        // Thread-safe update of acceleration data
         portENTER_CRITICAL(&dataMux);
-        // acceleration.x = -constrain(ax / 16384.0f, -1.0f, 1.0f);
-        // acceleration.y = constrain(ay / 16384.0f, -1.0f, 1.0f);
         acceleration.x = ax;
         acceleration.y = ay;
         portEXIT_CRITICAL(&dataMux);
-        printf("ACCEL_post:  %f  %f \r\n",acceleration.x,acceleration.y);
-
+        
+        printf("ACCEL: %f %f\r\n", acceleration.x, acceleration.y);
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
+// Main display task - handles buttons and rendering - runs on core 1
 void LEDTask(void *parameter) {
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    const TickType_t xFrequency = pdMS_TO_TICKS(16);
+    const TickType_t xFrequency = pdMS_TO_TICKS(16);  // ~60 FPS
     
     while (true) {
         checkButton();
         checkModeButton();
 
-        switch (currentMode){
+        switch (currentMode) {
             case 0:
                 updateParticles();
                 drawParticles();
@@ -799,12 +800,12 @@ void LEDTask(void *parameter) {
     }
 }
 
+// Main setup function - initializes everything and creates tasks
 void setup() {
     Serial.begin(115200);
     delay(1000);
     Serial.println("Starting initialization...");
 
-    // Initialize button pin
     pinMode(BUTTON_PIN, INPUT_PULLUP);
     pinMode(MODE_BUTTON_PIN, INPUT_PULLUP);
 
@@ -815,34 +816,16 @@ void setup() {
     initLEDs();
     initParticles();
 
-    xTaskCreatePinnedToCore(
-        MPUTask,
-        "MPUTask",
-        4096,
-        NULL,
-        2,
-        NULL,
-        0
-    );
+    // Create dual-core tasks for better performance
+    xTaskCreatePinnedToCore(MPUTask, "MPUTask", 4096, NULL, 2, NULL, 0);
+    xTaskCreatePinnedToCore(LEDTask, "LEDTask", 4096, NULL, 1, NULL, 1);
 
-    xTaskCreatePinnedToCore(
-        LEDTask,
-        "LEDTask",
-        4096,
-        NULL,
-        1,
-        NULL,
-        1
-    );
-
-    Serial.println("Setup complete");
+    Serial.println("Setup complete - ready to rock! 🚀");
 }
 
 void loop() {
-    vTaskDelete(NULL);
+    vTaskDelete(NULL);  // Main loop not needed, tasks handle everything
 }
-
-
 *const uint8_t IMAGES[][8] = {
 {
   0b00011000,
@@ -1081,3 +1064,4 @@ void loop() {
 }};
 const int IMAGES_LEN = sizeof(IMAGES)/8;
                                               // THIS IS THE ALPHABETS IN A LINEAR WAY
+
