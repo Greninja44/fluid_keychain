@@ -1080,4 +1080,4 @@ void loop() {
   0b11111111
 }};
 const int IMAGES_LEN = sizeof(IMAGES)/8;
-*/                                                  // THIS IS THE ALPHABETS IN A LINEAR WAY
+                                              // THIS IS THE ALPHABETS IN A LINEAR WAY
