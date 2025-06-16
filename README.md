@@ -20,12 +20,11 @@ The whole setup will be packed into a small custom 3D-printed case with a power 
 | 6  | Slide Switch (SPDT)                | THT switch for power control                            | 1   | $0.18        | 
 | 7  | 1uF Ceramic Capacitor (0603)       | Decoupling capacitor                                     | 2   | $0.06        | 
 | 8  | 10uF Electrolytic Capacitor        | Output smoothing cap                                    | 1   | $0.06        | 
-| 9  | SS14 Schottky Diode                | Reverse current protection                              | 1   | $0.07        | 
-| 10 | 3D Printed Case  + acrylic sheets                                             | 1   | $15       | 
+| 9  | SS14 Schottky Diode                | Reverse current protection                              | 1   | $0.07        |      | 
 | 11 | M2 Screws + Nuts                   | Fasten case (x4)                                        | 1 set | $0.12       |
 | 12 | Soldering Accessories              | Wire, flux, solder, header pins                         | —   | $10       | 
 | 13 | Custom PCB                         |     in case i dont get offline parts  will order pcba          | 1   | $42.41        | 
 
-**Total Estimated Cost: $81 – $85**
+**Total Estimated Cost: $65 – $70**
 
 ![image](https://github.com/user-attachments/assets/652454dc-4195-4e8a-a8fe-775b8b0b5d8c)
